@@ -14,24 +14,24 @@ export const defaults = {
 
 export const typeDefs = [
   `
-      extend schema {
-          query: Query
-          mutation: Mutation
-      }
-      extend type Query {
-          notes: [Note]!
-          note(id: Int!): Note
-      }
-      type Mutation{
+    schema {
+        query: Query
+        mutation: Mutation
+    }
+    type Query {
+        notes: [Note]!
+        note(id: Int!): Note
+    }
+    type Mutation{
         createNote(title: String!, content: String!): Note
-        editNote(id: String!, title: String!, content:String!): Note
-      }
-      type Note{
-          id: Int!
-          title: String!
-          content: String!
-      }
-      `,
+        editNote(id: Int!, title: String, content:String): Note
+    }
+    type Note{
+        id: Int!
+        title: String!
+        content: String!
+    }
+    `,
 ];
 export const resolvers = {
   Query: {
@@ -60,6 +60,24 @@ export const resolvers = {
         },
       });
       return newNote;
+    },
+    editNote: (_, { id, title, content }, { cache }) => {
+      const noteId = cache.config.dataIdFromObject({
+        __typename: "Note",
+        id,
+      });
+      const note = cache.readFragment({ fragment: NOTE_FRAGMENT, id: noteId });
+      const updatedNote = {
+        ...note,
+        title,
+        content,
+      };
+      cache.writeFragment({
+        id: noteId,
+        fragment: NOTE_FRAGMENT,
+        data: updatedNote,
+      });
+      return updatedNote;
     },
   },
 };
